@@ -59,7 +59,10 @@
                 "USE_Q_TUNE",
                 "USE_GYRO_FFT_FILTER"
             ],
-            "configurationProvider": "ms-vscode.cmake-tools"
+            "configurationProvider": "ms-vscode.cmake-tools",
+            "browse": {
+                "databaseFilename": "${workspaceFolder}/.vscode/browse.vc.db"
+            }
         }
     ],
     "version": 4
