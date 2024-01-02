@@ -37,7 +37,10 @@
                 "USE_ADAPTIVE_FILTER",
                 "MCU_FLASH_SIZE 1024",
             ],
-            "configurationProvider": "ms-vscode.cmake-tools"
+            "configurationProvider": "ms-vscode.cmake-tools",
+            "browse": {
+                "databaseFilename": "${workspaceFolder}/.vscode/browse.vc.db"
+            }
         }
     ],
     "version": 4
