@@ -508,10 +508,10 @@ static void dumpPgValue(const setting_t *value, uint8_t dumpMask)
         if (dumpMask & SHOW_DEFAULTS && !equalsDefault) {
             cliPrintf(defaultFormat, name);
             // if the craftname has a leading space, then enclose the name in quotes
-            if (strcmp(name, "name") == 0 && ((const char *)valuePointer)[0] == ' ') {
-                cliPrintf("\"%s\"", (const char *)valuePointer);
+            if (strcmp(name, "name") == 0 && ((const char *)defaultValuePointer)[0] == ' ') {
+                cliPrintf("\"%s\"", (const char *)defaultValuePointer);
             } else {
-                printValuePointer(value, valuePointer, 0);
+                printValuePointer(value, defaultValuePointer, 0);
             }
             cliPrintLinefeed();
         }
@@ -2058,14 +2058,14 @@ static void printLogic(uint8_t dumpMask, const logicCondition_t *logicConditions
 
                 cliDefaultPrintLinef(dumpMask, equalsDefault, format,
                     i,
-                    logic.enabled,
-                    logic.activatorId,
-                    logic.operation,
-                    logic.operandA.type,
-                    logic.operandA.value,
-                    logic.operandB.type,
-                    logic.operandB.value,
-                    logic.flags
+                    defaultValue.enabled,
+                    defaultValue.activatorId,
+                    defaultValue.operation,
+                    defaultValue.operandA.type,
+                    defaultValue.operandA.value,
+                    defaultValue.operandB.type,
+                    defaultValue.operandB.value,
+                    defaultValue.flags
                 );
             }
             cliDumpPrintLinef(dumpMask, equalsDefault, format,
@@ -2251,15 +2251,15 @@ static void printPid(uint8_t dumpMask, const programmingPid_t *programmingPids, 
 
             cliDefaultPrintLinef(dumpMask, equalsDefault, format,
                 i,
-                pid.enabled,
-                pid.setpoint.type,
-                pid.setpoint.value,
-                pid.measurement.type,
-                pid.measurement.value,
-                pid.gains.P,
-                pid.gains.I,
-                pid.gains.D,
-                pid.gains.FF
+                defaultValue.enabled,
+                defaultValue.setpoint.type,
+                defaultValue.setpoint.value,
+                defaultValue.measurement.type,
+                defaultValue.measurement.value,
+                defaultValue.gains.P,
+                defaultValue.gains.I,
+                defaultValue.gains.D,
+                defaultValue.gains.FF
             );
         }
         cliDumpPrintLinef(dumpMask, equalsDefault, format,
@@ -2861,27 +2861,17 @@ static void printFeature(uint8_t dumpMask, const featureConfig_t *featureConfig,
 {
     uint32_t mask = featureConfig->enabledFeatures;
     uint32_t defaultMask = featureConfigDefault->enabledFeatures;
-    for (uint32_t i = 0; ; i++) { // disable all feature first
+
+    for (uint32_t i = 0; ; i++) { 
         if (featureNames[i] == NULL)
             break;
         if (featureNames[i][0] == '\0')
             continue;
-        const char *format = "feature -%s";
-        cliDefaultPrintLinef(dumpMask, (defaultMask | ~mask) & (1 << i), format, featureNames[i]);
-        cliDumpPrintLinef(dumpMask, (~defaultMask | mask) & (1 << i), format, featureNames[i]);
-    }
-    for (uint32_t i = 0; ; i++) {  // reenable what we want.
-        if (featureNames[i] == NULL)
-            break;
-        if (featureNames[i][0] == '\0')
-            continue;
-        const char *format = "feature %s";
-        if (defaultMask & (1 << i)) {
-            cliDefaultPrintLinef(dumpMask, (~defaultMask | mask) & (1 << i), format, featureNames[i]);
-        }
-        if (mask & (1 << i)) {
-            cliDumpPrintLinef(dumpMask, (defaultMask | ~mask) & (1 << i), format, featureNames[i]);
-        }
+        const char *formatOn  = "feature %s";
+        const char *formatOff = "feature -%s";
+
+        cliDefaultPrintLinef(dumpMask, (defaultMask ^ ~mask) & (1 << i), (defaultMask & (1 << i)) ? formatOn : formatOff, featureNames[i]);
+        cliDumpPrintLinef(dumpMask, (defaultMask ^ ~mask) & (1 << i), (mask & (1 << i)) ? formatOn : formatOff, featureNames[i]);
     }
 }
 
@@ -2953,10 +2943,8 @@ static void cliFeature(char *cmdline)
 #ifdef USE_BLACKBOX
 static void printBlackbox(uint8_t dumpMask, const blackboxConfig_t *config, const blackboxConfig_t *configDefault)
 {
-
-    UNUSED(configDefault);
-
     uint32_t mask = config->includeFlags;
+    uint32_t defaultMask = configDefault->includeFlags;
 
     for (uint8_t i = 0; ; i++) {  // reenable what we want.
         if (blackboxIncludeFlagNames[i] == NULL) {
@@ -2966,15 +2954,9 @@ static void printBlackbox(uint8_t dumpMask, const blackboxConfig_t *config, cons
         const char *formatOn = "blackbox %s";
         const char *formatOff = "blackbox -%s";
 
-        if (mask & (1 << i)) {
-            cliDumpPrintLinef(dumpMask, false, formatOn, blackboxIncludeFlagNames[i]);
-            cliDefaultPrintLinef(dumpMask, false, formatOn, blackboxIncludeFlagNames[i]);
-        } else {
-            cliDumpPrintLinef(dumpMask, false, formatOff, blackboxIncludeFlagNames[i]);
-            cliDefaultPrintLinef(dumpMask, false, formatOff, blackboxIncludeFlagNames[i]);
-        }
+        cliDefaultPrintLinef(dumpMask, (defaultMask ^ ~mask) & (1 << i), (defaultMask & (1 << i)) ? formatOn : formatOff, blackboxIncludeFlagNames[i]);
+        cliDumpPrintLinef(dumpMask, (defaultMask ^ ~mask) & (1 << i), (mask & (1 << i)) ? formatOn : formatOff, blackboxIncludeFlagNames[i]);
     }
-
 }
 
 static void cliBlackbox(char *cmdline)
