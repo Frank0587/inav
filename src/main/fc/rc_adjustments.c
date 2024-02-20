@@ -604,6 +604,7 @@ static void applyStepAdjustment(controlRateConfig_t *controlRateConfig, uint8_t 
             if (newValue > SETTING_FW_LEVEL_PITCH_TRIM_MAX) {newValue = (float)SETTING_FW_LEVEL_PITCH_TRIM_MAX;}
             else if (newValue < SETTING_FW_LEVEL_PITCH_TRIM_MIN) {newValue = (float)SETTING_FW_LEVEL_PITCH_TRIM_MIN;}
             pidProfileMutable()->fixedWingLevelTrim = newValue;
+            adjustFixedWingLevelTrim(newValue);
             blackboxLogInflightAdjustmentEvent(ADJUSTMENT_FW_LEVEL_TRIM, (int)(newValue * 10.0f));
             break;
         }
