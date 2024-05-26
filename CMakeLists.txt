@@ -51,7 +51,8 @@ else()
     endif()
 endif()
 
-project(INAV VERSION 7.1.1)
+# Version 7.1.1 as SP variant (..06) 
+project(INAV VERSION 7.1.106)
 
 enable_language(ASM)
 
