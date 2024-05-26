@@ -552,6 +552,7 @@ static bool estimationCalculateCorrection_Z(estimationContext_t * ctx)
     DEBUG_SET(DEBUG_ALTITUDE, 7, accGetClipCount());            // Clip count
 
     bool correctOK = false;
+    float epvCorr = 0.0f;
 
     float wBaro = 0.0f;
     if (ctx->newFlags & EST_BARO_VALID) {
@@ -592,7 +593,7 @@ static bool estimationCalculateCorrection_Z(estimationContext_t * ctx)
         ctx->estPosCorr.z += wBaro * baroAltResidual * positionEstimationConfig()->w_z_baro_p * ctx->dt;
         ctx->estVelCorr.z += wBaro * baroAltResidual * sq(positionEstimationConfig()->w_z_baro_p) * ctx->dt;
 
-        ctx->newEPV = updateEPE(posEstimator.est.epv, ctx->dt, posEstimator.baro.epv, positionEstimationConfig()->w_z_baro_p);
+        epvCorr += (ABS(baroAltResidual) - posEstimator.est.epv) * ctx->dt * positionEstimationConfig()->w_z_baro_p;
 
         // Accelerometer bias
         if (!isAirCushionEffectDetected) {
@@ -607,7 +608,7 @@ static bool estimationCalculateCorrection_Z(estimationContext_t * ctx)
         if (!(ctx->newFlags & EST_Z_VALID)) {
             ctx->estPosCorr.z += posEstimator.gps.pos.z - posEstimator.est.pos.z;
             ctx->estVelCorr.z += posEstimator.gps.vel.z - posEstimator.est.vel.z;
-            ctx->newEPV = posEstimator.gps.epv;
+            epvCorr = posEstimator.gps.epv - posEstimator.est.epv;
         }
         else {
             // Altitude
@@ -617,13 +618,28 @@ static bool estimationCalculateCorrection_Z(estimationContext_t * ctx)
             ctx->estPosCorr.z += gpsAltResudual * positionEstimationConfig()->w_z_gps_p * ctx->dt;
             ctx->estVelCorr.z += gpsAltResudual * sq(positionEstimationConfig()->w_z_gps_p) * ctx->dt;
             ctx->estVelCorr.z += gpsVelZResudual * positionEstimationConfig()->w_z_gps_v * ctx->dt;
-            ctx->newEPV = updateEPE(posEstimator.est.epv, ctx->dt, MAX(posEstimator.gps.epv, gpsAltResudual), positionEstimationConfig()->w_z_gps_p);
+
+            epvCorr += (MAX(posEstimator.gps.epv, ABS(gpsAltResudual)) - posEstimator.est.epv) * ctx->dt * positionEstimationConfig()->w_z_gps_p;
 
             // Accelerometer bias
             ctx->accBiasCorr.z -= gpsAltResudual * sq(positionEstimationConfig()->w_z_gps_p);
         }
 
         correctOK = true;
+    }
+
+    /**
+     * Symptom: wrong Est.Altitude and Vspd when GPS altitude moves more than 10m after first Arming.
+     *          Reference Altitude is set at first Arming only without any correction after this point.    
+     * Problem: EPV was defined by GPS error only, even if altitude mainly follows baro. 
+     *          If EPV is to much, Z_VALID is cleared and Altitude is hard reset to GPS value.
+     * Solution: EPV calculate by weighted error of baro and gps.
+     * 
+     *  add this useful configuration:
+     *      set inav_reset_altitude = EACH_ARM
+    */
+    if (correctOK) {  /* overwrite init value if new value available */
+        ctx->newEPV = posEstimator.est.epv + epvCorr;
     }
 
     return correctOK;
