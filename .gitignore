@@ -17,7 +17,7 @@ startup_stm32f10x_md_gcc.s
 #.vscode/
 cov-int*
 /build/
-/build_SITL/
+/build_*/
 /[hs]itl/
 /ninja/
 /obj/
