@@ -4,19 +4,9 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Build AOCODARCH7DUAL",
+            "label": "docker run SPEEDYBEEF405WING",
             "type": "shell",
-            "command": "make AOCODARCH7DUAL",
-            "group": "build",
-            "problemMatcher": [],
-            "options": {
-                "cwd": "${workspaceFolder}/build"
-            }
-        },
-        {
-            "label": "Build AOCODARCH7DUAL",
-            "type": "shell",
-            "command": "make AOCODARCH7DUAL",
+            "command": "docker run -it -u root -v v:/git/inav:/src inav-build SPEEDYBEEF405WING",
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -25,12 +15,11 @@
             "options": {
                 "cwd": "${workspaceFolder}/build"
             }
-        }
-        ,
+        },
         {
-            "label": "CMAKE Update",
+            "label": "setup docker iNav container",
             "type": "shell",
-            "command": "cmake ..",
+            "command": "docker build --build-arg USER_ID=1000 --build-arg GROUP_ID=1000 -t inav-build .",
             "group": "build",
             "problemMatcher": [],
             "options": {
