@@ -563,6 +563,7 @@ static bool estimationCalculateCorrection_Z(estimationContext_t * ctx)
     float wGps = defaultAltitudeSource == ALTITUDE_SOURCE_BARO_ONLY && ctx->newFlags & EST_BARO_VALID ? 0.0f : 1.0f;
     float wBaro = defaultAltitudeSource == ALTITUDE_SOURCE_GPS_ONLY && ctx->newFlags & EST_GPS_Z_VALID ? 0.0f : 1.0f;
     //§§ float epvCorr = 0.0f;
+    static float gpsOrgZCorr = 0.0f;
 
     if (wBaro && ctx->newFlags & EST_BARO_VALID && wGps && ctx->newFlags & EST_GPS_Z_VALID) {
         const float gpsBaroResidual = fabsf(posEstimator.gps.pos.z - posEstimator.baro.alt);
@@ -637,9 +638,17 @@ static bool estimationCalculateCorrection_Z(estimationContext_t * ctx)
             const float gpsVelZResidual = wGps * (posEstimator.gps.vel.z - posEstimator.est.vel.z);
             const float w_z_gps_p = positionEstimationConfig()->w_z_gps_p;
 
-            ctx->estPosCorr.z += gpsAltResidual * w_z_gps_p * ctx->dt;
+            gpsOrgZCorr       += gpsAltResidual * positionEstimationConfig()->w_z_baro_p/2 * ctx->dt;   // correct the gps launch altitude with half of baro trust
+            ctx->estPosCorr.z += gpsAltResidual * w_z_gps_p/2 * ctx->dt;                                // correct the actual altitude with with half of gps trust
             ctx->estVelCorr.z += gpsAltResidual * sq(w_z_gps_p) * ctx->dt;
             ctx->estVelCorr.z += gpsVelZResidual * positionEstimationConfig()->w_z_gps_v * ctx->dt;
+            // if accumulated origin altitude correction is more than 10cm, correct the origin 
+            // (origin is an integer, so no continous correction are possible)
+            if(roundf(gpsOrgZCorr) > 10.0f) {
+                posControl.gpsOrigin.alt += roundf(gpsOrgZCorr);
+                gpsOrgZCorr = 0.0f;
+            }    
+
             ctx->newEPV = updateEPE(posEstimator.est.epv, ctx->dt, MAX(posEstimator.gps.epv, fabsf(gpsAltResidual)), w_z_gps_p);
             //§§ epvCorr += (MAX(posEstimator.gps.epv, fabsf(gpsAltResudual)) - posEstimator.est.epv) * ctx->dt * w_z_gps_p;
 
