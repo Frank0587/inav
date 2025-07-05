@@ -610,9 +610,9 @@ static float computePidLevelTarget(flight_dynamics_index_t axis) {
     if (STATE(AIRPLANE)) {
         // Automatically pitch down if the throttle is manually controlled and reduced below cruise throttle
 #ifdef USE_FW_AUTOLAND
-        if (axis == FD_PITCH && FLIGHT_MODE(ANGLE_MODE) && !navigationIsControllingThrottle() && !FLIGHT_MODE(NAV_FW_AUTOLAND)) {
+        if (axis == FD_PITCH && (FLIGHT_MODE(ANGLE_MODE) || FLIGHT_MODE(HORIZON_MODE)) && !navigationIsControllingThrottle() && !FLIGHT_MODE(NAV_FW_AUTOLAND)) {
 #else
-        if (axis == FD_PITCH && FLIGHT_MODE(ANGLE_MODE) && !navigationIsControllingThrottle()) {
+        if (axis == FD_PITCH && (FLIGHT_MODE(ANGLE_MODE) || FLIGHT_MODE(HORIZON_MODE)) && !navigationIsControllingThrottle()) {
 #endif
             angleTarget += scaleRange(MAX(0, currentBatteryProfile->nav.fw.cruise_throttle - rcCommand[THROTTLE]), 0, currentBatteryProfile->nav.fw.cruise_throttle - PWM_RANGE_MIN, 0, navConfig()->fw.minThrottleDownPitchAngle);
         }
@@ -1396,6 +1396,11 @@ bool isFixedWingLevelTrimActive(void)
            (FLIGHT_MODE(ANGLE_MODE) || FLIGHT_MODE(HORIZON_MODE)) &&
            !FLIGHT_MODE(SOARING_MODE) && !FLIGHT_MODE(MANUAL_MODE) &&
            !navigationIsControllingAltitude() && !(navCheckActiveAngleHoldAxis() == FD_PITCH && !angleHoldIsLevel);
+}
+
+void adjustFixedWingLevelTrim(float newValue)
+{
+    fixedWingLevelTrim = newValue;
 }
 
 void updateFixedWingLevelTrim(timeUs_t currentTimeUs)
