@@ -18,6 +18,7 @@ rem to build iNav..
 @rem              recomended, because script always starts a new container
 docker run --rm -it -u root -v v:/git/inav:/src inav-build SPEEDYBEEF405WING
 
+@rem falls cache nicht mehr passt: delete .\iNav\build\
 
 @rem If you need to update Settings.md, run:
 @rem docker run --entrypoint /src/cmake/docker_docs.sh --rm -it -u root -v <PATH_TO_REPO>:/src inav-build

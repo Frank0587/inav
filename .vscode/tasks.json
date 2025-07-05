@@ -4,9 +4,9 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "docker run SPEEDYBEEF405WING",
+            "label": "iNav: build SPEEDYBEEF405WING (in Docker)",
             "type": "shell",
-            "command": "docker run -it -u root -v v:/git/inav:/src inav-build SPEEDYBEEF405WING",
+            "command": "docker run --rm -it -u root -v v:/git/inav:/src inav-build SPEEDYBEEF405WING",
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -17,7 +17,17 @@
             }
         },
         {
-            "label": "setup docker iNav container",
+            "label": "iNav: delete cache (when error occures)",
+            "type": "shell",
+            "command": "rd /s /q .\\CMakeFiles",
+            "group": "build",
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceFolder}/build"
+            }
+        },
+        {
+            "label": "iNav: create docker image 'inav-build'",
             "type": "shell",
             "command": "docker build --build-arg USER_ID=1000 --build-arg GROUP_ID=1000 -t inav-build .",
             "group": "build",
