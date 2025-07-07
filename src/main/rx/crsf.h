@@ -21,7 +21,7 @@
 #define CRSF_PORT_OPTIONS       (SERIAL_STOPBITS_1 | SERIAL_PARITY_NO)
 #define CRSF_PORT_MODE          MODE_RXTX
 
-#define CRSF_MAX_CHANNEL        17
+#define CRSF_MAX_CHANNEL        (17 +8) // add 8 'virtual' channels
 
 enum { CRSF_SYNC_BYTE = 0xC8 };
 
